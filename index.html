@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Heart Particle - Hường</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    overflow: hidden;
+}
+canvas {
+    display: block;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+const cx = canvas.width / 2;
+const cy = canvas.height / 2;
+
+// ====== CONFIG ======
+const TOTAL = 9000;
+const SCALE = 11;
+const COLOR = [255, 120, 200];
+
+let particles = [];
+let time = 0;
+
+// ====== HEART SHAPE ======
+function heart(t) {
+    return {
+        x: 16 * Math.pow(Math.sin(t), 3),
+        y: -(13 * Math.cos(t)
+            - 5 * Math.cos(2*t)
+            - 2 * Math.cos(3*t)
+            - Math.cos(4*t))
+    };
+}
+
+// ====== CREATE PARTICLES ======
+while (particles.length < TOTAL) {
+    const t = Math.random() * Math.PI * 2;
+    const d = Math.pow(Math.random(), 0.65);
+    const h = heart(t);
+
+    if (Math.abs(h.x) < 0.12) continue;
+
+    particles.push({
+        t,
+        d,
+        size: Math.random() * 0.7 + 0.2,
+        alpha: Math.random() * 0.4 + 0.3,
+        drift: Math.random() * 0.6 + 0.2,
+        ox: (Math.random() - 0.5) * 2,
+        oy: (Math.random() - 0.5) * 2
+    });
+}
+
+// ====== DRAW LOOP ======
+function animate() {
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // ECG-like heartbeat
+    time += 0.03;
+    const beat =
+        Math.sin(time) * 0.08 +
+        Math.sin(time * 0.5) * 0.03;
+
+    // Glow mode
+    ctx.globalCompositeOperation = "lighter";
+
+    particles.forEach(p => {
+        const h = heart(p.t);
+        const warp = 1 + Math.abs(h.x) * 0.1;
+
+        const x = cx + h.x * SCALE * p.d * (1 + beat) * warp
+                    + Math.sin(time * p.d) * p.drift + p.ox;
+        const y = cy + h.y * SCALE * p.d * (1 + beat)
+                    + Math.cos(time * p.d) * p.drift + p.oy;
+
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${COLOR[0]},${COLOR[1]},${COLOR[2]},${p.alpha})`;
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // Reset blend
+    ctx.globalCompositeOperation = "source-over";
+
+    // ====== TEXT ======
+    ctx.shadowColor = "rgba(255,160,220,0.8)";
+    ctx.shadowBlur = 20;
+    ctx.font = "bold 42px Arial";
+    ctx.fillStyle = "rgba(255,200,230,1)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Hường", cx, cy);
+
+    ctx.shadowBlur = 0;
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
